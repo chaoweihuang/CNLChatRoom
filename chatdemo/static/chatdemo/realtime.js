@@ -45,6 +45,7 @@ $(function() {
             }
             return;
         } else if (data.type == "reload") {
+            alert(message.data);
             var chat = $("#chat")
             if ($('#chat_room_name').text() != data.chat_room_name) {
                 alert("chat_room_name is wrong");
@@ -105,7 +106,7 @@ $(function() {
         btn.innerText = 'B';
         btn.onclick = clickBlackList;
         ele.append(btn);
-        ele.append('<strong>'+username+'</strong> : ')
+        ele.append(' <strong>'+username+'</strong> : ')
         ele.append(message)
 
         return ele;
@@ -114,8 +115,10 @@ $(function() {
     function clickBlackList() {
         var message = {
             type: "black-list",
-            blacked_user: $(this).parent().find('strong').text()
+            blacked_user: $(this).parent().find('strong').text(),
+            chat_room_name: $('#chat_room_name').text()
         }
+        chatsock.send(JSON.stringify(message));
         return false;
     }
 

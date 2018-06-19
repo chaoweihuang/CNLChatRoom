@@ -1,6 +1,6 @@
 from channels import Group, Channel
 from channels.sessions import channel_session
-from .models import ChatMessage
+from .models import ChatMessage, BlackList
 from django.contrib.auth.models import User
 import json
 from channels.auth import channel_session_user, channel_session_user_from_http
@@ -66,6 +66,37 @@ def chat_receive(message):
 
         return current_message
 
+    def reload(data):
+        current_room_name = data['chat_room_name']
+        current_room_name, current_room = find_current_room(current_room_name, message.user)
+
+        chat_queryset = ChatMessage.objects.filter(room=current_room).order_by("-created")[:10]
+        chat_message_count = len(chat_queryset)
+        if chat_message_count > 0:
+            first_message_id = chat_queryset[len(chat_queryset)-1].id
+        else:
+            first_message_id = -1
+        previous_id = -1
+        if first_message_id != -1:
+            try:
+                previous_id = ChatMessage.objects.filter(
+                    room=current_room,
+                    pk__lt=first_message_id).order_by("-pk")[:1][0].id
+            except IndexError:
+                previous_id = -1
+        chat_messages = reversed(chat_queryset)
+        chat_messages = [(m.user.username, process_message(m.message)) for m in chat_messages]
+
+        blacked_queryset = BlackList.objects.filter(user=message.user.username)
+        blacked_users = [q.blacked_user for q in blacked_queryset]
+
+        my_dict = {'type': 'reload',
+                   'messages': chat_messages,
+                   'chat_room_name': data['chat_room_name'],
+                   'black_list': blacked_users,
+                   'first_message_id': previous_id}
+        message.reply_channel.send({'text': json.dumps(my_dict)})
+
     print(message.items())
     data = json.loads(message['text'])
 
@@ -93,31 +124,20 @@ def chat_receive(message):
     elif data['type'] == "reload":
         if not message.user.is_authenticated:
             return
-        current_room_name = data['chat_room_name']
-        current_room_name, current_room = find_current_room(current_room_name, message.user)
+        reload(data)
+    elif data['type'] == 'black-list':
+        if not message.user.is_authenticated:
+            return
+        blacked_username = data['blacked_user']
+        username = message.user.username
+        blacked_queryset = BlackList.objects.filter(user=username, blacked_user=blacked_username)
+        if len(blacked_queryset) >= 1:
+            for record in blacked_queryset:
+                record.delete()
+        elif len(blacked_queryset) == 0:
+            BlackList.objects.create(user=username, blacked_user=blacked_username)
 
-        chat_queryset = ChatMessage.objects.filter(room=current_room).order_by("-created")[:10]
-        chat_message_count = len(chat_queryset)
-        if chat_message_count > 0:
-            first_message_id = chat_queryset[len(chat_queryset)-1].id
-        else:
-            first_message_id = -1
-        previous_id = -1
-        if first_message_id != -1:
-            try:
-                previous_id = ChatMessage.objects.filter(
-                    room=current_room,
-                    pk__lt=first_message_id).order_by("-pk")[:1][0].id
-            except IndexError:
-                previous_id = -1
-        chat_messages = reversed(chat_queryset)
-        chat_messages = [(m.user.username, process_message(m.message)) for m in chat_messages]
-        my_dict = {'type': 'reload',
-                   'messages': chat_messages,
-                   'chat_room_name': data['chat_room_name'],
-                   'first_message_id': previous_id}
-        message.reply_channel.send({'text': json.dumps(my_dict)})
-
+        reload(data)
 
 @channel_session_user
 def chat_disconnect(message):

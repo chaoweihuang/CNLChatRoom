@@ -38,14 +38,19 @@ $(function() {
         btn.setAttribute('class', 'btn btn-default btn-blacklist')
         btn.innerText = 'B';
         btn.onclick = clickBlackList;
-        ele.append('<strong>'+data.user+'</strong> : ')
+        ele.append(' <strong>'+data.user+'</strong> : ')
         ele.append(data.message)
 
         return ele;
     }
 
     function clickBlackList() {
-        alert("blacked " + $(this).parent().find('strong').text());
+        var message = {
+            type: "black-list",
+            blacked_user: $(this).parent().find('strong').text(),
+            chat_room_name: $('#chat_room_name').text()
+        }
+        chatsock.send(JSON.stringify(message));
         return false;
     }
 
