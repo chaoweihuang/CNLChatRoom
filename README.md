@@ -15,37 +15,17 @@ sudo apt-get update
 Install dependencies :
 
 ```
-sudo apt-get install python3-pip python3-dev libpq-dev postgresql postgresql-contrib nginx
-```
-
-Database setup :
-
-```
-sudo -u postgres psql
-
-CREATE DATABASE djangochat;
-
-CREATE USER djangochatuser WITH PASSWORD 'YOUR_PASSWORD';
-
-ALTER ROLE djangochatuser SET client_encoding TO 'utf8';
-
-ALTER ROLE djangochatuser SET default_transaction_isolation TO 'read committed';
-
-ALTER ROLE djangochatuser SET timezone TO 'UTC';
-
-GRANT ALL PRIVILEGES ON DATABASE djangochat TO djangochatuser;
-
-\q
+sudo apt-get install python3-pip python3-dev
 ```
 
 Setup Django project :
 
 ```
-git clone https://github.com/ploggingdev/djangochat.git
+git clone https://github.com/whsunset/CNLChatRoom.git
 
 sudo apt install python3-venv
 
-cd djangochat
+cd CNLChatRoom
 
 mkdir venv
 
@@ -58,32 +38,10 @@ pip install -r requirements.txt
 pip install --upgrade pip
 ```
 
-Add environment variables :
-
-```
-sudo nano ~/.bashrc
-
-#append the following to the end of the file
-
-export djangochat_secret_key="SECRET_KEY"
-
-export djangochat_db_name="djangochat"
-
-export djangochat_db_user="djangochatuser"
-
-export djangochat_db_password="YOUR_PASSWORD"
-
-export djangochat_postmark_token="POSTMARK_TOKEN"
-
-export DJANGO_SETTINGS_MODULE=djangochat.settings
-```
-
 Source the env variables :
 
 ```
 deactivate
-
-source ~/.bashrc
 
 source venv/djangochat/bin/activate
 ```
