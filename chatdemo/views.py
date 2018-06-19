@@ -12,7 +12,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core import exceptions
 from django.views import generic
+from webpush import send_user_notification
 from .models import ChatMessage
+
 
 class IndexView(generic.View):
 
@@ -27,15 +29,17 @@ class IndexView(generic.View):
         previous_id = -1
         if first_message_id != -1:
             try:
-                previous_id = ChatMessage.objects.filter(pk__lt=first_message_id).order_by("-pk")[:1][0].id
+                previous_id = ChatMessage.objects.filter(
+                    pk__lt=first_message_id).order_by("-pk")[:1][0].id
             except IndexError:
                 previous_id = -1
         chat_messages = reversed(chat_queryset)
-        
+
         return render(request, "chatdemo/chatroom.html", {
             'chat_messages': chat_messages,
-            'first_message_id' : previous_id,
+            'first_message_id': previous_id,
         })
+
 
 class LogoutView(LoginRequiredMixin, View):
 
@@ -44,14 +48,15 @@ class LogoutView(LoginRequiredMixin, View):
         messages.success(request, 'You have been logged out')
         return redirect(reverse('chatdemo:login'))
 
+
 class RegisterView(View):
-    form_class  = RegisterForm
+    form_class = RegisterForm
     template_name = 'registration/register.html'
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
-        return render(request, self.template_name, {'form' : form})
-    
+        return render(request, self.template_name, {'form': form})
+
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
         if form.is_valid():
@@ -60,26 +65,32 @@ class RegisterView(View):
             new_email = form.cleaned_data['email']
 
             if get_user_model().objects.filter(username=new_username).exists():
-                messages.error(request, "Username not available, choose a different one")
-                return render(request, self.template_name, {'form' : form})
-            if new_email != '' and get_user_model().objects.filter(email=new_email).exists():
-                messages.error(request, "Email not available, choose a different one")
-                return render(request, self.template_name, {'form' : form})
-            
-            #validate password
+                messages.error(
+                    request, "Username not available, choose a different one")
+                return render(request, self.template_name, {'form': form})
+            if (new_email != '' and
+                    get_user_model().objects.filter(email=new_email).exists()):
+                messages.error(
+                    request, "Email not available, choose a different one")
+                return render(request, self.template_name, {'form': form})
+
+            # validate password
             try:
-                validate_password(new_password)
+                # validate_password(new_password)
+                pass
             except exceptions.ValidationError as e:
                 form.errors['password'] = list(e.messages)
-                return render(request, self.template_name, {'form' : form})
+                return render(request, self.template_name, {'form': form})
 
-            user = get_user_model().objects.create_user(username=new_username, password=new_password, email=new_email)
+            user = get_user_model().objects.create_user(
+                username=new_username, password=new_password, email=new_email)
             user = authenticate(username=new_username, password=new_password)
             if user is not None:
                 login(request, user)
                 return redirect(reverse('chatdemo:profile'))
         else:
-            return render(request, self.template_name, {'form' : form})
+            return render(request, self.template_name, {'form': form})
+
 
 class ProfileView(LoginRequiredMixin, View):
     login_url = '/user/login/'
@@ -90,19 +101,21 @@ class ProfileView(LoginRequiredMixin, View):
         data = {}
         if request.user.email != '':
             data['email'] = request.user.email
-        form = self.form_class(initial = data)
-        return render(request, self.template_name, {'form' : form})
-    
+        form = self.form_class(initial=data)
+        return render(request, self.template_name, {'form': form})
+
     def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST, initial={'email' : request.user.email})
+        form = self.form_class(request.POST,
+                               initial={'email': request.user.email})
         if form.is_valid():
             if form.has_changed():
                 user = request.user
-                
+
                 for field in form.changed_data:
                     if field == 'email':
                         if form.cleaned_data[field] != '' and User.objects.filter(email=form.cleaned_data[field]).exclude(id=user.id).exists():
-                            messages.error(request, "Email address is already in use")
+                            messages.error(
+                                request, "Email address is already in use")
                             return redirect(reverse('chatdemo:profile'))
                     setattr(user, field, form.cleaned_data[field])
                 user.save()
@@ -114,3 +127,9 @@ class ProfileView(LoginRequiredMixin, View):
         else:
             messages.error(request, "Invalid form data")
             return redirect(reverse('chatdemo:profile'))
+
+
+def push_notification(request):
+    payload = {"head": "Welcome!", "body": "Hello World"}
+    send_user_notification(user=request.user, payload=payload, ttl=1000)
+    return redirect(reverse('chatdemo:home_page'))

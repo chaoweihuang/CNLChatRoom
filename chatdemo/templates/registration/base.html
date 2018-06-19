@@ -1,4 +1,5 @@
 {% load static %}
+{% load webpush_notifications %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -21,6 +22,7 @@
     <![endif]-->
 
     <meta name="theme-color" content="#ffffff">
+    {% webpush_header %}
 </head>
 
 <body class="text-center">
@@ -55,6 +57,18 @@
     </nav>
 
     {% block content %}{% endblock %}
+
+    {% if user.is_authenticated or group %}
+      <button class="btn btn-default" id="webpush-subscribe-button" {% if group %}data-group="{{ group }}"{% endif %} data-url="/webpush/save_information">
+        Subscribe to Push Messaging
+      </button>
+      <div id="webpush-message" hidden></div>
+
+      <form action="/push">
+          <button type="submit" class="btn btn-default">Send notification</button>
+      </form>
+    {% endif %}
+
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->

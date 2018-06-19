@@ -19,4 +19,5 @@ from django.contrib import admin
 urlpatterns = [
     url(r'^', include('chatdemo.urls')),
     url(r'^admin/', admin.site.urls),
+    url(r'^webpush/', include('webpush.urls'))
 ]

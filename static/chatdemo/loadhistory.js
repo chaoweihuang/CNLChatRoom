@@ -11,9 +11,9 @@ $(function() {
         new_messages = data.messages
 
         last_id = data.previous_id
-
+        
         if(last_id == -1){
-            $("#load_old_messages").addClass('disabled');
+            $("#load_old_messages").remove();
             $("#last_message_id").text(last_id)
             if(new_messages.length == 0){
                 return;
@@ -27,14 +27,14 @@ $(function() {
 
         for(var i=new_messages.length - 1; i>=0; i--){
             var ele = $('<li class="list-group-item"></li>')
-
+            
             ele.append(
                 '<strong>'+new_messages[i]['user']+'</strong> : '
                 )
-
+            
             ele.append(
                 new_messages[i]['message'])
-
+            
             chat.prepend(ele)
         }
 
@@ -42,8 +42,7 @@ $(function() {
 
     $("#load_old_messages").on("click", function(event) {
         var message = {
-            last_message_id: $('#last_message_id').text(),
-            chat_room_name: $('#chat_room_name').text()
+            last_message_id: $('#last_message_id').text()
         }
         loadhistorysock.send(JSON.stringify(message));
         return false;

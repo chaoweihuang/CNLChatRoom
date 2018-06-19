@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ['djangochat_secret_key']
+SECRET_KEY = 'ABC1234'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'channels_presence',
     'celery',
     'django_celery_beat',
+    'webpush',
 ]
 
 MIDDLEWARE = [
@@ -82,13 +83,8 @@ WSGI_APPLICATION = 'djangochat.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ['djangochat_db_name'],
-        'USER': os.environ['djangochat_db_user'],
-        'PASSWORD': os.environ['djangochat_db_password'],
-        'HOST': 'localhost',
-        'PORT': '',
-        'CONN_MAX_AGE' : 60
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db.sqlite3',
     }
 }
 
@@ -140,7 +136,7 @@ LOGIN_REDIRECT_URL = '/'
 EMAIL_BACKEND = 'postmarker.django.EmailBackend'
 
 POSTMARK = {
-    'TOKEN': os.environ['djangochat_postmark_token'],
+    'TOKEN': 'TOKEN',
     'TEST_MODE': False,
 }
 
@@ -148,8 +144,14 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "asgi_redis.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [os.environ.get('REDIS_URL', 'redis://localhost:6379')],
+            "hosts": [os.environ.get('REDIS_URL', 'redis://localhost:6379')]
         },
         "ROUTING": "chatdemo.routing.channel_routing",
     },
+}
+
+WEBPUSH_SETTINGS = {
+    "VAPID_PUBLIC_KEY": "BKdeYG6PzALG_N_21JLQO8prlpi_RxBFKFlN881lm9_pdMEQ_5curAOh-k4vpw9LwlwNdvBG2OkYUf6bDPQ5Jos",
+    "VAPID_PRIVATE_KEY": "zRJ-ttGIGgT9CaVFBm5ms5fJcx20HVJgD4TW9zO9B5o",
+    "VAPID_ADMIN_EMAIL": "no.12586269025@gmail.com"
 }
