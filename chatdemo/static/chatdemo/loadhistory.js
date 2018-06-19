@@ -26,19 +26,28 @@ $(function() {
         var chat = $("#chat")
 
         for(var i=new_messages.length - 1; i>=0; i--){
-            var ele = $('<li class="list-group-item"></li>')
-
-            ele.append(
-                '<strong>'+new_messages[i]['user']+'</strong> : '
-                )
-
-            ele.append(
-                new_messages[i]['message'])
-
+            var ele = createMessage(new_messages[i]['user'], new_messages[i]['message']);
             chat.prepend(ele)
         }
 
     };
+
+    function createMessage(username, message) {
+        var ele = $('<li class="list-group-item"></li>')
+        var btn = document.createElement('button');
+        btn.setAttribute('class', 'btn btn-default btn-blacklist')
+        btn.innerText = 'B';
+        btn.onclick = clickBlackList;
+        ele.append('<strong>'+data.user+'</strong> : ')
+        ele.append(data.message)
+
+        return ele;
+    }
+
+    function clickBlackList() {
+        alert("blacked " + $(this).parent().find('strong').text());
+        return false;
+    }
 
     $("#load_old_messages").on("click", function(event) {
         var message = {

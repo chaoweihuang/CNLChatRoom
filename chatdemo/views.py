@@ -12,8 +12,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core import exceptions
 from django.views import generic
-from webpush import send_user_notification
+from webpush import send_group_notification, send_user_notification
 from .models import ChatMessage
+from .models import NotificationCount
 
 
 class IndexView(generic.View):
@@ -35,9 +36,16 @@ class IndexView(generic.View):
                 previous_id = -1
         chat_messages = reversed(chat_queryset)
 
+        try:
+            count = (NotificationCount.objects.get(user=request.user)).count
+        except:
+            nc = NotificationCount.objects.create(user=request.user)
+            count = nc.count
+
         return render(request, "chatdemo/chatroom.html", {
             'chat_messages': chat_messages,
             'first_message_id': previous_id,
+            'notification_count' : count,
         })
 
 
@@ -85,9 +93,17 @@ class RegisterView(View):
             user = get_user_model().objects.create_user(
                 username=new_username, password=new_password, email=new_email)
             user = authenticate(username=new_username, password=new_password)
+
+            print("before")
+            n = NotificationCount.objects.create(user=user)
+            print("n:")
+            print(n.count)
+
+
             if user is not None:
                 login(request, user)
                 return redirect(reverse('chatdemo:profile'))
+
         else:
             return render(request, self.template_name, {'form': form})
 
@@ -130,6 +146,33 @@ class ProfileView(LoginRequiredMixin, View):
 
 
 def push_notification(request):
-    payload = {"head": "Welcome!", "body": "Hello World"}
+    if 'notification' in request.GET:
+        payload = {"head": request.user.username, "body": request.GET['notification']}
+    else:
+        payload = {"head": request.user.username, "body": "有東西出錯了"}
+
+    notification_count = NotificationCount.objects.get(user=request.user)
+    if int(notification_count.count) > 0:
+        notification_count.count = int(notification_count.count) - 1
+        notification_count.save()
+
+        send_group_notification(group_name='all', payload=payload, ttl=1000)
+        return redirect(reverse('chatdemo:home_page'))
+    else:
+        payload = {"head": "Error", "body": "尬廣次數不足"}
+        send_user_notification(user=request.user, payload=payload, ttl=1000)
+        return redirect(reverse('chatdemo:home_page'))
+
+
+def buy_notification(request):
+    buy_count = int(request.GET['count'])
+    print('buy_count')
+    print(buy_count)
+    notification_count = NotificationCount.objects.get(user=request.user)
+    notification_count.count = int(notification_count.count) + buy_count
+    notification_count.save()
+
+    payload = {"head": "購買成功", "body": "已購買" + str(buy_count) + "次廣播"}
     send_user_notification(user=request.user, payload=payload, ttl=1000)
     return redirect(reverse('chatdemo:home_page'))
+

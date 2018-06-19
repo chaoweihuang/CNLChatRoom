@@ -34,21 +34,17 @@ $(function() {
             }
             return;
         } else if (data.type == "chat") {
-            alert(message.data);
-            var chat = $("#chat")
-            var ele = $('<li class="list-group-item"></li>')
-
-            ele.append(
-                '<strong>'+data.user+'</strong> : ')
-
-            ele.append(
-                data.message)
-
-            chat.append(ele)
-            $('#all_messages').scrollTop($('#all_messages')[0].scrollHeight);
+            if (($('#chat_room_name').text() == data.chat_room_name && $('#user_name').text() == data.user)
+                || ($('#chat_room_name').text() == data.user && $('#user_name').text() == data.chat_room_name)
+                || ($('#chat_room_name').text() == "Lobby" && data.chat_room_name == "Lobby")) {
+                var chat = $("#chat")
+                var ele = createMessage(data.user, data.message);
+                alert(ele.innerText);
+                chat.append(ele)
+                $('#all_messages').scrollTop($('#all_messages')[0].scrollHeight);
+            }
             return;
         } else if (data.type == "reload") {
-            alert(message.data);
             var chat = $("#chat")
             if ($('#chat_room_name').text() != data.chat_room_name) {
                 alert("chat_room_name is wrong");
@@ -57,9 +53,7 @@ $(function() {
             chat.empty();
             messages = data.messages;
             for(var i = 0; i < messages.length; i++) {
-                var ele = $('<li class="list-group-item"></li>');
-                ele.append('<strong>'+messages[i][0]+'</strong> : ');
-                ele.append(messages[i][1]);
+                var ele = createMessage(messages[i][0], messages[i][1]);
                 chat.append(ele);
             }
             $('#last_message_id').text(data.first_message_id);
@@ -104,5 +98,28 @@ $(function() {
         return false;
     }
 
+    function createMessage(username, message) {
+        var ele = $('<li class="list-group-item"></li>')
+        var btn = document.createElement('button');
+        btn.setAttribute('class', 'btn btn-default btn-blacklist')
+        btn.innerText = 'B';
+        btn.onclick = clickBlackList;
+        ele.append(btn);
+        ele.append('<strong>'+username+'</strong> : ')
+        ele.append(message)
+
+        return ele;
+    }
+
+    function clickBlackList() {
+        var message = {
+            type: "black-list",
+            blacked_user: $(this).parent().find('strong').text()
+        }
+        return false;
+    }
+
     $('.list-group-item-action').click(clickUserList);
+
+    $('.btn-blacklist').click(clickBlackList);
 });

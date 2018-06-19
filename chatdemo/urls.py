@@ -41,5 +41,6 @@ urlpatterns = [
         r'^reset/done/$',
         auth_views.password_reset_complete, name="password_reset_complete"
     ),
-    url(r'^push$', views.push_notification)
+    url(r'^push$', views.push_notification),
+    url(r'^buy$', views.buy_notification)
 ]

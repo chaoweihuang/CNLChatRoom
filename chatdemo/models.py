@@ -24,3 +24,17 @@ class ChatMessage(models.Model):
         """
 
         return self.message
+
+
+class NotificationCount(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    count = models.IntegerField(default=5)
+
+
+class BlackList(models.Model):
+    """
+    Model to represent black list
+    """
+
+    user = models.TextField(max_length=300)
+    blacked_user = models.TextField(max_length=300)

@@ -1,4 +1,4 @@
-from channels import Group
+from channels import Group, Channel
 from channels.sessions import channel_session
 from .models import ChatMessage
 from django.contrib.auth.models import User
@@ -28,7 +28,6 @@ def chat_connect(message):
 @touch_presence
 @channel_session_user
 def chat_receive(message):
-    print(message.items())
     def find_current_room(room_name, user):
         current_room_name = "all"
         if room_name == "Lobby":
@@ -43,7 +42,6 @@ def chat_receive(message):
             return current_room_name, current_room_queryset[0]
         elif len(current_room_queryset) == 0:
             room = Room.objects.add(current_room_name, message.reply_channel.name, user)
-            Group(current_room_name).add(message.reply_channel)
             return current_room_name, room
         return "all", Room.objects.filter(channel_name="all")[0]
 
@@ -68,6 +66,7 @@ def chat_receive(message):
 
         return current_message
 
+    print(message.items())
     data = json.loads(message['text'])
 
     if data['type'] == "chat":
@@ -87,9 +86,10 @@ def chat_receive(message):
 
         my_dict = {'user': m.user.username,
                    'message': current_message,
+                   'chat_room_name': data['chat_room_name'],
                    'type': 'chat'}
-        print(dir(Group(current_room_name).channel_layer))
-        Group(current_room_name).send({'text': json.dumps(my_dict)})
+
+        Group('all').send({'text': json.dumps(my_dict)})
     elif data['type'] == "reload":
         if not message.user.is_authenticated:
             return

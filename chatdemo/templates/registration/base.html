@@ -59,14 +59,50 @@
     {% block content %}{% endblock %}
 
     {% if user.is_authenticated or group %}
-      <button class="btn btn-default" id="webpush-subscribe-button" {% if group %}data-group="{{ group }}"{% endif %} data-url="/webpush/save_information">
+      <button class="btn btn-default" id="webpush-subscribe-button" data-group="all" data-url="/webpush/save_information">
         Subscribe to Push Messaging
       </button>
       <div id="webpush-message" hidden></div>
+    <br/>
+    <br/>
 
-      <form action="/push">
-          <button type="submit" class="btn btn-default">Send notification</button>
-      </form>
+    
+    <form action="/push" id="notificationForm" autocomplete="off">
+            <div class="col-xs-9 col-sm-7 col-sm-offset-3">
+                {% if user.is_authenticated %}
+                <input id="notification" type="text" name = "notification" class="form-control input-lg" placeholder="Type notification message here" required>
+                {% else %}
+                <input class="form-control  input-lg" id="disabledInput" type="text" placeholder="Please login to chat" disabled>
+                {% endif %}
+            </div>
+            <div class="col-xs-2 col-sm-1" >
+                <button type="submit" class="btn btn-default" align = "center">Send notification</button>
+                <br/>
+            </div>
+            <br/>
+            <br/>
+            <p align = "center">剩餘尬廣次數：{{ notification_count }}</p>
+
+    </form>
+
+
+
+
+
+    <form action="/buy" autocomplete="off">
+            <div class="col-xs-9 col-sm-7 col-sm-offset-3">
+                {% if user.is_authenticated %}
+                <input id="count" type="text" name = "count" placeholder="購買次數" size="7" maxlength="4" required>
+                {% else %}
+                <input class="form-control  input-lg" id="disabledInput" type="text" placeholder="Please login to chat" disabled>
+                {% endif %}
+                <button type="submit" class="btn btn-default" align = "left">買廣</button>
+            </div>
+            <div class="col-xs-2 col-sm-1" >
+                <br/>
+
+    </form>
+          
     {% endif %}
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

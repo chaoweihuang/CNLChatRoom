@@ -28,6 +28,7 @@
 
         <div id="chat_room">
             <div class="hidden" id="chat_room_name">Lobby</div>
+            <div class="hidden" id="user_name">{{ user.username }}</div>
 
             <div class="col-xs-9 col-sm-8 text-left pre-scrollable" id="all_messages">
                 <div class="hidden" id="last_message_id">{{ first_message_id }}</div>
@@ -38,8 +39,9 @@
 
                     {% for message in chat_messages %}
                         <li class="list-group-item">
-                        <strong>{{ message.user }} : </strong>
-                        {{ message.message_html|safe }}
+                            <button class="btn btn-default btn-blacklist">B</button>
+                            <strong>{{ message.user }} : </strong>
+                            {{ message.message_html|safe }}
                         </li>
                     {% empty %}
                     <div id="no_messages">No messages here</div>
