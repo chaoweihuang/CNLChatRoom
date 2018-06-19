@@ -12,6 +12,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core import exceptions
 from django.views import generic
+from channels_presence.models import Room
 from webpush import send_group_notification, send_user_notification
 from .models import ChatMessage
 from .models import NotificationCount
@@ -21,7 +22,8 @@ class IndexView(generic.View):
 
     def get(self, request):
         # We want to show the last 10 messages, ordered most-recent-last
-        chat_queryset = ChatMessage.objects.order_by("-created")[:10]
+        room = Room.objects.get(channel_name='all')
+        chat_queryset = ChatMessage.objects.filter(room=room).order_by("-created")[:10]
         chat_message_count = len(chat_queryset)
         if chat_message_count > 0:
             first_message_id = chat_queryset[len(chat_queryset)-1].id
@@ -36,11 +38,14 @@ class IndexView(generic.View):
                 previous_id = -1
         chat_messages = reversed(chat_queryset)
 
-        try:
-            count = (NotificationCount.objects.get(user=request.user)).count
-        except:
-            nc = NotificationCount.objects.create(user=request.user)
-            count = nc.count
+        if request.user.is_authenticated:
+            try:
+                count = (NotificationCount.objects.get(user=request.user)).count
+            except:
+                nc = NotificationCount.objects.create(user=request.user)
+                count = nc.count
+        else:
+            count = 0
 
         return render(request, "chatdemo/chatroom.html", {
             'chat_messages': chat_messages,
@@ -94,11 +99,7 @@ class RegisterView(View):
                 username=new_username, password=new_password, email=new_email)
             user = authenticate(username=new_username, password=new_password)
 
-            print("before")
             n = NotificationCount.objects.create(user=user)
-            print("n:")
-            print(n.count)
-
 
             if user is not None:
                 login(request, user)
@@ -175,4 +176,3 @@ def buy_notification(request):
     payload = {"head": "購買成功", "body": "已購買" + str(buy_count) + "次廣播"}
     send_user_notification(user=request.user, payload=payload, ttl=1000)
     return redirect(reverse('chatdemo:home_page'))
-
